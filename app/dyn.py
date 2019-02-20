@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+
 from datetime import datetime
 import logging
 import sys
@@ -12,7 +15,7 @@ from Dyndns import Dyndns
 host = '0.0.0.0'
 port = 12873
 app_name = 'Dyndns'
-log_file = 'dyndns.log'
+log_file = '/var/log/dyndns.log'
 
 # set logging
 logger = logging.getLogger(app_name)
@@ -23,7 +26,7 @@ logger.addHandler(hdlr)
 
 # start logging
 logger.setLevel(logging.INFO)
-logger.info('Starting {}'.format(app_name))
+logger.info('Starting {}, listening on host {} port {}'.format(app_name, host, port))
 
 
 def sig_term(mysignal, frame):

@@ -26,14 +26,15 @@ class Dyndns(Thread):
         self.conn.close()
 
 
-    def process_post_request(self, data):
+    def process_request(self, data):
         """ Process data received from the client
         """
         headers = {}
         content = b''
         end_headers = False
         for line in data.splitlines():
-            if line.startswith(b'POST'):
+            if line.startswith(b'POST') or line.startswith(b'PUT') \
+                or line.startswith(b'GET') or line.startswith(b'HEAD'):
                 self.logger.info('Skipping line: {}'.format(line))
             else:
                 if end_headers:
@@ -46,17 +47,16 @@ class Dyndns(Thread):
                         try:
                             headers[hdr[0]] = hdr[1]
                         except Exception as err:
-                            logger.info('Exception: {}'.format(err))
-                            logger.info('Original line: {}'.format(line))
-        # finished decoding the POST
-        content = json.loads(content.decode('utf-8'))
-        logger.info('Headers:\n{}'.format(headers))
-        logger.info('Content:\n{}'.format(content))
+                            self.logger.info('Exception: {}'.format(err))
+                            self.logger.info('Original line: {}'.format(line))
+        # finished decoding the request
+        self.logger.info('Headers:\n{}'.format(headers))
+        self.logger.info('Content:\n{}'.format(content))
         try:
-            logger.info('Processing data...')
+            self.logger.info('Processing data...')
             pass
         except Exception as err:
-            logger.info('Exception: {}'.format(err))
+            self.logger.info('Exception: {}'.format(err))
         return
 
 
@@ -77,6 +77,7 @@ class Dyndns(Thread):
                 code = b'503 Service Unavailable'
                 resp = err
                 self.logger.error('Exception: {}'.format(err))
+            self.process_request(data)
             self.send_response(code, resp)
             self.logger.info('GET or HEAD data: {}'.format(data))
         elif data.startswith(b'PUT /') or data.startswith(b'POST /'):
@@ -88,7 +89,7 @@ class Dyndns(Thread):
                 code = b'503 Service Unavailable'
                 resp = err
                 self.logger.error('Exception: {}'.format(err))
-            self.process_post_request(data)
+            self.process_request(data)
             self.send_response(code, resp)
             self.logger.info('PUT or POST data: {}'.format(data))
         else:

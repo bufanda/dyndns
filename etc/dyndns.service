@@ -1,0 +1,11 @@
+[Unit]
+Description=DynDNS Service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=3
+ExecStart=/usr/local/bin/dyn.py
+
+[Install]
+WantedBy=multi-user.target
