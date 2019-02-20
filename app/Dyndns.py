@@ -1,6 +1,8 @@
 from threading import Thread
 from datetime import datetime
 import socket
+from config import *
+from base64 import b64decode
 
 
 class Dyndns(Thread):
@@ -54,10 +56,33 @@ class Dyndns(Thread):
         self.logger.info('Content:\n{}'.format(content))
         try:
             self.logger.info('Processing data...')
-            pass
+            if b'Authorization' in headers:
+                self.logger.info(headers[b'Authorization'])
+                user_pass = b64decode(headers[b'authorization'][6:])
+                if user_pass == (username + ':' + password).encode('utf-8'):
+                    code = b'200 OK'
+                    resp = b'OK'
+                else:
+                    self.logger.info('Wrong username or password {}'.format(username + ':' + password))
+                    code = b'403 Unauthorized'
+                    resp = b'Access denied!'
+            elif b'authorization' in headers:
+                self.logger.info(headers[b'authorization'])
+                user_pass = b64decode(headers[b'authorization'][6:])
+                if user_pass == (username + ':' + password).encode('utf-8'):
+                    code = b'200 OK'
+                    resp = b'OK'
+                else:
+                    self.logger.info('Wrong username or password {}'.format(username + ':' + password))
+                    code = b'403 Unauthorized'
+                    resp = b'Access denied!'
+            else:
+                self.logger.info('Unauthorized')
+                code = b'403 Unauthorized'
+                resp = b'Access denied!'
         except Exception as err:
             self.logger.info('Exception: {}'.format(err))
-        return
+        return code, resp
 
 
     def run(self):
@@ -71,25 +96,21 @@ class Dyndns(Thread):
         if data.startswith(b'GET /') or data.startswith(b'HEAD /'):
             try:
                 # perform the check
-                code = b'200 OK'
-                resp = b'OK'
+                code, resp = self.process_request(data)
             except Exception as err:
                 code = b'503 Service Unavailable'
                 resp = err
                 self.logger.error('Exception: {}'.format(err))
-            self.process_request(data)
             self.send_response(code, resp)
             self.logger.info('GET or HEAD data: {}'.format(data))
         elif data.startswith(b'PUT /') or data.startswith(b'POST /'):
             try:
                 # perform the check
-                code = b'200 OK'
-                resp = b'OK'
+                code, resp = self.process_request(data)
             except Exception as err:
                 code = b'503 Service Unavailable'
                 resp = err
                 self.logger.error('Exception: {}'.format(err))
-            self.process_request(data)
             self.send_response(code, resp)
             self.logger.info('PUT or POST data: {}'.format(data))
         else:

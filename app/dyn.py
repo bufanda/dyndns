@@ -17,6 +17,7 @@ port = 12873
 app_name = 'Dyndns'
 log_file = '/var/log/dyndns.log'
 
+
 # set logging
 logger = logging.getLogger(app_name)
 hdlr = logging.FileHandler(log_file)
