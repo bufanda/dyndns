@@ -8,10 +8,11 @@ import CloudFlare
 class Dyndns(Thread):
     """ Thread that handles one request
     """
-    def __init__(self, conn, config, logger):
+    def __init__(self, conn, config, remote_ip, logger):
         super().__init__()
         self.conn = conn
         self.config = config
+        self.remote_ip = remote_ip
         self.logger = logger
         self.data_size = 1024
         self.logger.info('{} - New thread started'.format(self.name))
@@ -149,7 +150,11 @@ class Dyndns(Thread):
             code, resp = self.authenticate(headers)
             if resp == b'OK':
                 # call the Cloudflare DNS Record update 
-                resp = self.update_cf_record(headers[b'X-Forwarded-For'].decode('utf-8')).encode('utf-8')
+                if b'X-Forwarded-For' in headers:
+                    remote_ip = headers[b'X-Forwarded-For'].decode('utf-8')
+                else:
+                    remote_ip = self.remote_ip
+                resp = self.update_cf_record(remote_ip).encode('utf-8')
         except Exception as err:
             self.logger.info('Exception in process_request: {}'.format(err))
             code = '503 Service Unavailable'.encode('utf-8')

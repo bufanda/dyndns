@@ -66,7 +66,7 @@ if __name__ == '__main__':
                 try:
                     conn, addr = serversocket.accept()
                     logger.info('Connection accepted: %s %s' % (conn, addr))
-                    thread = Dyndns(conn, config, logger)
+                    thread = Dyndns(conn, config, addr[0], logger)
                     thread.start()
                 except KeyboardInterrupt:
                     run = False
