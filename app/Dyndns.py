@@ -1,16 +1,16 @@
 from threading import Thread
 from datetime import datetime
 import socket
-from config import *
 from base64 import b64decode
 
 
 class Dyndns(Thread):
     """ Thread that handles one request
     """
-    def __init__(self, conn, logger):
+    def __init__(self, conn, config, logger):
         super().__init__()
         self.conn = conn
+        self.config = config
         self.logger = logger
         self.data_size = 1024
         self.logger.info('{} - New thread started'.format(self.name))
@@ -26,6 +26,27 @@ class Dyndns(Thread):
         except socket.error as err:
             logger.error('Exception while sending response: {}'.format(err))
         self.conn.close()
+
+
+    def authenticate(self, headers):
+        """ Basic authentication
+        """
+        if b'Authorization' in headers:
+            self.logger.info(headers[b'Authorization'])
+            user_pass = b64decode(headers[b'Authorization'][6:])
+            if user_pass == (self.config['username'] + ':' + self.config['password']).encode('utf-8'):
+                code = b'200 OK'
+                resp = b'OK'
+            else:
+                self.logger.info('Wrong username or password {}'.format(
+                    self.config['username'] + ':' + self.config['password']))
+                code = b'403 Unauthorized'
+                resp = b'Access denied!'
+        else:
+            self.logger.info('Unauthorized')
+            code = b'403 Unauthorized'
+            resp = b'Access denied!'
+        return code, resp
 
 
     def process_request(self, data):
@@ -47,7 +68,8 @@ class Dyndns(Thread):
                     else:
                         hdr = line.split(b': ')
                         try:
-                            headers[hdr[0]] = hdr[1]
+                            # ucfirst format hor headers
+                            headers[hdr[0].title()] = hdr[1]
                         except Exception as err:
                             self.logger.info('Exception: {}'.format(err))
                             self.logger.info('Original line: {}'.format(line))
@@ -56,32 +78,11 @@ class Dyndns(Thread):
         self.logger.info('Content:\n{}'.format(content))
         try:
             self.logger.info('Processing data...')
-            if b'Authorization' in headers:
-                self.logger.info(headers[b'Authorization'])
-                user_pass = b64decode(headers[b'authorization'][6:])
-                if user_pass == (username + ':' + password).encode('utf-8'):
-                    code = b'200 OK'
-                    resp = b'OK'
-                else:
-                    self.logger.info('Wrong username or password {}'.format(username + ':' + password))
-                    code = b'403 Unauthorized'
-                    resp = b'Access denied!'
-            elif b'authorization' in headers:
-                self.logger.info(headers[b'authorization'])
-                user_pass = b64decode(headers[b'authorization'][6:])
-                if user_pass == (username + ':' + password).encode('utf-8'):
-                    code = b'200 OK'
-                    resp = b'OK'
-                else:
-                    self.logger.info('Wrong username or password {}'.format(username + ':' + password))
-                    code = b'403 Unauthorized'
-                    resp = b'Access denied!'
-            else:
-                self.logger.info('Unauthorized')
-                code = b'403 Unauthorized'
-                resp = b'Access denied!'
+            code, resp = self.authenticate(headers)
         except Exception as err:
-            self.logger.info('Exception: {}'.format(err))
+            self.logger.info('Exception in process_request: {}'.format(err))
+            code = '503 Service Unavailable'.encode('utf-8')
+            resp = 'An error has occured: {}'.format(err).encode('utf-8')
         return code, resp
 
 
@@ -108,9 +109,9 @@ class Dyndns(Thread):
                 # perform the check
                 code, resp = self.process_request(data)
             except Exception as err:
-                code = b'503 Service Unavailable'
-                resp = err
-                self.logger.error('Exception: {}'.format(err))
+                code = '503 Service Unavailable'.encode('utf-8')
+                resp = 'An error has occured: {}'.format(err).encode('utf-8')
+                self.logger.error('Exception in run: {}'.format(err))
             self.send_response(code, resp)
             self.logger.info('PUT or POST data: {}'.format(data))
         else:

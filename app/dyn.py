@@ -10,24 +10,19 @@ import socket
 from time import sleep
 from threading import Thread
 from Dyndns import Dyndns
-
-
-host = '0.0.0.0'
-port = 12873
-app_name = 'Dyndns'
-log_file = '/var/log/dyndns.log'
+from config import config
 
 
 # set logging
-logger = logging.getLogger(app_name)
-hdlr = logging.FileHandler(log_file)
+logger = logging.getLogger(config['app_name'])
+hdlr = logging.FileHandler(config['log_file'])
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 
 # start logging
 logger.setLevel(logging.INFO)
-logger.info('Starting {}, listening on host {} port {}'.format(app_name, host, port))
+logger.info('Starting {}, listening on {} port {}'.format(config['app_name'], config['host'], config['port']))
 
 
 def sig_term(mysignal, frame):
@@ -53,7 +48,7 @@ if __name__ == '__main__':
     run = True
     while run:
         try:
-            serversocket.bind((host, port))
+            serversocket.bind((config['host'], config['port']))
         except Exception as err:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -71,7 +66,7 @@ if __name__ == '__main__':
                 try:
                     conn, addr = serversocket.accept()
                     logger.info('Connection accepted: %s %s' % (conn, addr))
-                    thread = Dyndns(conn, logger)
+                    thread = Dyndns(conn, config, logger)
                     thread.start()
                 except KeyboardInterrupt:
                     run = False
