@@ -2,6 +2,7 @@ from threading import Thread
 from datetime import datetime
 import socket
 from base64 import b64decode
+import CloudFlare
 
 
 class Dyndns(Thread):
@@ -49,6 +50,73 @@ class Dyndns(Thread):
         return code, resp
 
 
+    def update_cf_record(self, ip):
+        """ Update the DNS Record if the IP addres has changed
+        """
+        result = ''
+        try:
+            cf = CloudFlare.CloudFlare(email=self.config['cloudflare_email'],
+                                       token=self.config['cloudflare_token'])
+            # find out zone_id
+            params = {'name': self.config['cloudflare_zone']}
+            zones = cf.zones.get(params=params)
+            zone_id = zones[0]['id']
+            self.logger.info('Cloudflare zone id: {}'.format(zone_id))
+            # read the record
+            params = {
+                'name': self.config['hostname'],
+                'match': 'all',
+                'type': 'A'
+            }
+            dns_records = cf.zones.dns_records.get(zone_id, params=params)
+            # if the record does not exist, create it
+            if len(dns_records) == 0:
+                new_record = {
+                    'name': self.config['hostname'],
+                    'type': 'A',
+                    'content': ip
+                }
+                try:
+                    self.logger.info('Inexistent record, creating it: {}'.format(new_record))
+                    dns_record = cf.zones.dns_records.post(zone_id, data=new_record)
+                except CloudFlare.exceptions.CloudFlareAPIError as err:
+                    self.logger.error('Cloudflare post API call failed: {}'.format(err))
+                    result = 'error'
+                else:
+                    self.logger.info('Updated record: {} {}'.format(self.config['hostname'], ip))
+                    result = 'success'
+            # debugging info
+            self.logger.info('DNS Records: {}'.format(dns_records))
+        except CloudFlare.exceptions.CloudFlareAPIError as err:
+            self.logger.error('Cloudflare get API call failed: {}'.format(err))
+            result = 'error'
+        else:
+            for record in dns_records:
+                # if A record
+                if record['type'] == 'A':
+                    # if the ip address has changed
+                    if ip != record['content']:
+                        record_id = record['id']
+                        new_record = {
+                            'name': self.config['hostname'],
+                            'type': 'A',
+                            'content': ip
+                        }
+                        try:
+                            dns_record = cf.zones.dns_records.post(zone_id, data=new_record)
+                        except CloudFlare.exceptions.CloudFlareAPIError as err:
+                            self.logger.error('Cloudflare post API call failed: {}'.format(err))
+                            result = 'error'
+                        else:
+                            self.logger.info('Updated record: {} {}'.format(self.config['hostname'], ip))
+                            result = 'success'
+                    else:
+                        result = 'unmodified'
+                else:
+                    result = 'unknown'
+        return result
+
+
     def process_request(self, data):
         """ Process data received from the client
         """
@@ -79,6 +147,9 @@ class Dyndns(Thread):
         try:
             self.logger.info('Processing data...')
             code, resp = self.authenticate(headers)
+            if resp == b'OK':
+                # call the Cloudflare DNS Record update 
+                resp = self.update_cf_record(headers[b'X-Forwarded-For'].decode('utf-8')).encode('utf-8')
         except Exception as err:
             self.logger.info('Exception in process_request: {}'.format(err))
             code = '503 Service Unavailable'.encode('utf-8')
