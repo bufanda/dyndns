@@ -104,9 +104,9 @@ class Dyndns(Thread):
                             'content': ip
                         }
                         try:
-                            dns_record = cf.zones.dns_records.post(zone_id, data=new_record)
+                            dns_record = cf.zones.dns_records.put(zone_id, record_id, data=new_record)
                         except CloudFlare.exceptions.CloudFlareAPIError as err:
-                            self.logger.error('Cloudflare post API call failed: {}'.format(err))
+                            self.logger.error('Cloudflare put API call failed: {}'.format(err))
                             result = 'error'
                         else:
                             self.logger.info('Updated record: {} {}'.format(self.config['hostname'], ip))
