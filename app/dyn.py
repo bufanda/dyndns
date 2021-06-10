@@ -10,8 +10,10 @@ import socket
 from time import sleep
 from threading import Thread
 from Dyndns import Dyndns
-from config import config
+from config import config, _get_config_from_env
 
+#get config from environment
+_get_config_from_env()
 
 # set logging
 logger = logging.getLogger(config['app_name'])
@@ -19,6 +21,12 @@ hdlr = logging.FileHandler(config['log_file'])
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
+
+#set logging for stdout
+if config['inContainer']:
+    consoleHdlr = logging.StreamHandler(sys.stdout)
+    consoleHdlr.setFormatter(formatter)
+    logger.addHandler(consoleHdlr)
 
 # start logging
 logger.setLevel(logging.INFO)
@@ -36,7 +44,6 @@ class ExitDaemon(Exception):
     """ Exception used to exit daemon
     """
     pass
-
 
 if __name__ == '__main__':
     # define signals
