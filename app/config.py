@@ -26,7 +26,7 @@ def _get_config_from_env():
     if "DYN_HOST" in os.environ:
         config['host'] = os.environ['DYN_HOST']
 
-    if "DYN_PORTT" in os.environ:
+    if "DYN_PORT" in os.environ:
         config['port'] = 18080
 
     if "DYN_LOGFILE" in os.environ:
