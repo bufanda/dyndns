@@ -16,7 +16,7 @@ COPY requirements.txt /
 
 WORKDIR  /
 RUN pip install -r requirements.txt
-RUN ln -sf /var/log/dyndns.log /dev/stdout
+RUN ln -sf /dev/stdout /var/log/dyndns.log
 
 CMD [ "python3", "/app/dyn.py" ]
 EXPOSE 18080
