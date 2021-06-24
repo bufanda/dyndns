@@ -123,11 +123,13 @@ class Dyndns(Thread):
         """
         headers = {}
         content = b''
+        parameters = b''
         end_headers = False
         for line in data.splitlines():
             if line.startswith(b'POST') or line.startswith(b'PUT') \
                 or line.startswith(b'GET') or line.startswith(b'HEAD'):
                 self.logger.info('Skipping line: {}'.format(line))
+                parameters = line
             else:
                 if end_headers:
                     content += line
@@ -149,8 +151,18 @@ class Dyndns(Thread):
             self.logger.info('Processing data...')
             code, resp = self.authenticate(headers)
             if resp == b'OK':
-                # call the Cloudflare DNS Record update 
-                if b'X-Forwarded-For' in headers:
+                # call the Cloudflare DNS Record update
+                if b'/?ipv4' in parameters:
+                    ip_start = parameters.index(b'=') + 3
+                    ip = ''
+                    for char in str(parameters)[ip_start:]:
+                        if char != ' ':
+                            ip = ip + char
+                            ip_start
+                        else:
+                            break
+                    remote_ip = ip
+                elif b'X-Forwarded-For' in headers:
                     remote_ip = headers[b'X-Forwarded-For'].decode('utf-8')
                 else:
                     remote_ip = self.remote_ip
