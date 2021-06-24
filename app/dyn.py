@@ -17,16 +17,10 @@ _get_config_from_env()
 
 # set logging
 logger = logging.getLogger(config['app_name'])
-hdlr = logging.FileHandler(config['log_file'])
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+hdlr = logging.FileHandler(config['log_file'])    
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
-
-#set logging for stdout
-if config['inContainer']:
-    consoleHdlr = logging.StreamHandler(sys.stdout)
-    consoleHdlr.setFormatter(formatter)
-    logger.addHandler(consoleHdlr)
 
 # start logging
 logger.setLevel(logging.INFO)
