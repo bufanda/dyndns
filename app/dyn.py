@@ -1,30 +1,29 @@
 #!/usr/bin/env python3
 
 
-from datetime import datetime
 import logging
 import sys
 import os
 import signal
 import socket
 from time import sleep
-from threading import Thread
 from Dyndns import Dyndns
 from config import config, _get_config_from_env
 
-#get config from environment
+# get config from environment
 _get_config_from_env()
 
 # set logging
 logger = logging.getLogger(config['app_name'])
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
-hdlr = logging.FileHandler(config['log_file'])    
+hdlr = logging.FileHandler(config['log_file'])
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 
 # start logging
 logger.setLevel(logging.INFO)
-logger.info('Starting {}, listening on {} port {}'.format(config['app_name'], config['host'], config['port']))
+logger.info('Starting {}, listening on {} port {}'
+            .format(config['app_name'], config['host'], config['port']))
 
 
 def sig_term(mysignal, frame):
@@ -39,12 +38,13 @@ class ExitDaemon(Exception):
     """
     pass
 
+
 if __name__ == '__main__':
     # define signals
     signal.signal(signal.SIGTERM, sig_term)
     signal.signal(signal.SIGINT, sig_term)
     signal.signal(signal.SIGHUP, sig_term)
-    
+
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     run = True
     while run:
@@ -53,16 +53,18 @@ if __name__ == '__main__':
         except Exception as err:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            logger.error('Exception: %s %s %s %s %s' % (err, exc_type, exc_obj,
-                                                        fname, exc_tb.tb_lineno))
+            logger.error('Exception: %s %s %s %s %s' %
+                         (err, exc_type, exc_obj, fname,
+                          exc_tb.tb_lineno))
         else:
             try:
                 serversocket.listen(5)
             except Exception as err:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                logger.error('Exception: %s %s %s %s %s' % (err, exc_type, exc_obj,
-                                                            fname, exc_tb.tb_lineno))
+                logger.error('Exception: %s %s %s %s %s' %
+                             (err, exc_type, exc_obj, fname,
+                              exc_tb.tb_lineno))
             while run:
                 try:
                     conn, addr = serversocket.accept()
@@ -75,9 +77,11 @@ if __name__ == '__main__':
                     run = False
                 except Exception as err:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
-                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    logger.error('Exception: %s %s %s %s %s' % (err, exc_type, exc_obj,
-                                                               fname, exc_tb.tb_lineno))
+                    fname = os.path.split(exc_tb.tb_frame.f_code
+                                          .co_filename)[1]
+                    logger.error('Exception: %s %s %s %s %s' %
+                                 (err, exc_type, exc_obj, fname,
+                                  exc_tb.tb_lineno))
         try:
             sleep(1)
         except KeyboardInterrupt:

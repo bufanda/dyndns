@@ -1,5 +1,4 @@
 from threading import Thread
-from datetime import datetime
 import socket
 from base64 import b64decode
 import CloudFlare
@@ -17,7 +16,6 @@ class Dyndns(Thread):
         self.data_size = 1024
         self.logger.info('{} - New thread started'.format(self.name))
 
-
     def send_response(self, code, resp):
         """ Send http response
         """
@@ -26,9 +24,9 @@ class Dyndns(Thread):
             self.conn.send(b'Content-Type: text/plain\n\n')
             self.conn.send(b'%s\n' % resp)
         except socket.error as err:
-            logger.error('Exception while sending response: {}'.format(err))
+            self.logger.error('Exception while sending response: {}'
+                              .format(err))
         self.conn.close()
-
 
     def authenticate(self, headers):
         """ Basic authentication
@@ -36,7 +34,9 @@ class Dyndns(Thread):
         if b'Authorization' in headers:
             self.logger.info(headers[b'Authorization'])
             user_pass = b64decode(headers[b'Authorization'][6:])
-            if user_pass == (self.config['username'] + ':' + self.config['password']).encode('utf-8'):
+            if user_pass == \
+                    (self.config['username'] + ':' +
+                     self.config['password']).encode('utf-8'):
                 code = b'200 OK'
                 resp = b'OK'
             else:
@@ -49,7 +49,6 @@ class Dyndns(Thread):
             code = b'403 Unauthorized'
             resp = b'Access denied!'
         return code, resp
-
 
     def update_cf_record(self, ip):
         """ Update the DNS Record if the IP addres has changed
@@ -78,13 +77,18 @@ class Dyndns(Thread):
                     'content': ip
                 }
                 try:
-                    self.logger.info('Inexistent record, creating it: {}'.format(new_record))
-                    dns_record = cf.zones.dns_records.post(zone_id, data=new_record)
+                    self.logger.info('Inexistent record, creating it: {}'
+                                     .format(new_record))
+                    cf.zones.dns_records.post(zone_id,
+                                              data=new_record)
                 except CloudFlare.exceptions.CloudFlareAPIError as err:
-                    self.logger.error('Cloudflare post API call failed: {}'.format(err))
+                    self.logger.error('Cloudflare post API call failed: {}'
+                                      .format(err))
                     result = 'error'
                 else:
-                    self.logger.info('Updated record: {} {}'.format(self.config['hostname'], ip))
+                    self.logger.info('Updated record: {} {}'
+                                     .format(self.config['hostname'],
+                                             ip))
                     result = 'success'
             # debugging info
             self.logger.info('DNS Records: {}'.format(dns_records))
@@ -104,19 +108,22 @@ class Dyndns(Thread):
                             'content': ip
                         }
                         try:
-                            dns_record = cf.zones.dns_records.put(zone_id, record_id, data=new_record)
+                            cf.zones.dns_records.put(zone_id, record_id,
+                                                     data=new_record)
                         except CloudFlare.exceptions.CloudFlareAPIError as err:
-                            self.logger.error('Cloudflare put API call failed: {}'.format(err))
+                            self.logger.error('Cloudflare put API call failed: \
+                                              {}'.format(err))
                             result = 'error'
                         else:
-                            self.logger.info('Updated record: {} {}'.format(self.config['hostname'], ip))
+                            self.logger.info('Updated record: {} {}'
+                                             .format(self
+                                                     .config['hostname'], ip))
                             result = 'success'
                     else:
                         result = 'unmodified'
                 else:
                     result = 'unknown'
         return result
-
 
     def process_request(self, data):
         """ Process data received from the client
@@ -127,7 +134,7 @@ class Dyndns(Thread):
         end_headers = False
         for line in data.splitlines():
             if line.startswith(b'POST') or line.startswith(b'PUT') \
-                or line.startswith(b'GET') or line.startswith(b'HEAD'):
+                    or line.startswith(b'GET') or line.startswith(b'HEAD'):
                 self.logger.info('Skipping line: {}'.format(line))
                 parameters = line
             else:
@@ -172,7 +179,6 @@ class Dyndns(Thread):
             code = '503 Service Unavailable'.encode('utf-8')
             resp = 'An error has occured: {}'.format(err).encode('utf-8')
         return code, resp
-
 
     def run(self):
         data = b''

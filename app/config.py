@@ -16,10 +16,11 @@ config['hostname'] = 'my.ddnshostname.net'
 # Cloudflare data
 config['cloudflare_email'] = "email.address@domain.net"
 config['cloudflare_token'] = "my.secret.cloudflare.token"
-config['cloudflare_zone']  = "ddnshostname.net"
+config['cloudflare_zone'] = "ddnshostname.net"
 
-#docker stuff
+# docker stuff
 config['inContainer'] = False
+
 
 def _get_config_from_env():
     global config
@@ -40,18 +41,17 @@ def _get_config_from_env():
 
     if "DYN_DNSNAME" in os.environ:
         config['hostname'] = os.environ['DYN_DNSNAME']
-    
+
     if "DYN_CF_MAIL" in os.environ:
         config['cloudflare_email'] = os.environ['DYN_CF_MAIL']
-    
+
     if "DYN_CF_API_TOKE" in os.environ:
         config['cloudflare_token'] = os.environ['DYN_CF_API_TOKE']
-    
+
     if "DYN_CF_ZONE" in os.environ:
-        config['cloudflare_zone']  = os.environ['DYN_CF_ZONE']
+        config['cloudflare_zone'] = os.environ['DYN_CF_ZONE']
 
     if "DYN_INCONTAINER" in os.environ:
-        config['inContainer']  = True
-    
+        config['inContainer'] = True
+
     return
-    
