@@ -23,16 +23,15 @@ jobs:
       - checkout
       - run: pip install flake8
       - run: flake8
-  docker_lint:
-    dockerfiles: ./
-    executor-class: medium
-    hadolint-tag: 2.5.0-debian
-    #ignore-rules: 'DL4005,DL3008'
-    trusted-registries: 'docker.io'
-
 workflows:
   version: 2
   scripts:
     jobs:
     - shellcheck/check
     - flake8_lint
+    -   docker/hadolint:
+          dockerfiles: ./
+          executor-class: medium
+          hadolint-tag: 2.5.0-debian
+          #ignore-rules: 'DL4005,DL3008'
+          trusted-registries: 'docker.io'
