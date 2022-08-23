@@ -1,0 +1,43 @@
+---
+kind: pipeline
+name: dyndns
+
+platform:
+  os: linux
+  arch: amd64
+
+
+steps:
+  - name: pylint
+    image: python:3.8-alpine
+    environment:
+        PYTEST_ADDOPTS: --color=yes
+    commands:
+        - pip3 install -r requirements.txt -r requirements-test.txt
+        - py.test --pylint app/dyn.py app/dyndns.py app/config.py
+  - name: hadolint
+    image: "ghcr.io/hadolint/hadolint:latest-debian"
+    commands:
+      - hadolint --version
+      - hadolint Dockerfile
+  - name: build master
+    image: plugins/docker
+    settings:
+      repo: sunna.nbg:5050/bufanda/dyndns
+      registry: sunna.nbg:5050
+      autotag: yes
+      insecure: yes
+    when:
+      event:
+        - tag
+        - push
+  - name: build tag
+    image: plugins/docker
+    settings:
+      repo: sunna.nbg:5050/bufanda/dyndns
+      registry: sunna.nbg:5050
+      autotag: yes
+      insecure: yes
+    when:
+      event:
+        - tag
