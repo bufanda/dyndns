@@ -4,6 +4,7 @@ import socket
 from base64 import b64decode
 import CloudFlare
 
+
 # pylint: disable=R0912,W0703,E1101
 class DynDns(Thread):
 
@@ -59,9 +60,9 @@ class DynDns(Thread):
         """
         result = ''
         try:
-            cloudflare = CloudFlare.CloudFlare(email= \
-                    self.config['cloudflare_email'],
-                    token=self.config['cloudflare_token'])
+            cloudflare = CloudFlare.CloudFlare(
+                         email=self.config['cloudflare_email'],
+                         token=self.config['cloudflare_token'])
             # find out zone_id
             params = {'name': self.config['cloudflare_zone']}
             zones = cloudflare.zones.get(params=params)
@@ -73,8 +74,8 @@ class DynDns(Thread):
                 'match': 'all',
                 'type': 'A'
             }
-            dns_records = cloudflare.zones.dns_records.get(zone_id, \
-                    params=params)
+            dns_records = cloudflare.zones.dns_records.get(zone_id,
+                                                           params=params)
             # if the record does not exist, create it
             if len(dns_records) == 0:
                 new_record = {
@@ -86,7 +87,7 @@ class DynDns(Thread):
                     self.logger.info(f'Inexistent record, creating it: \
                         {new_record}')
                     cloudflare.zones.dns_records.post(zone_id,
-                                              data=new_record)
+                                                      data=new_record)
                 except CloudFlare.exceptions.CloudFlareAPIError as err:
                     self.logger.error(f'Cloudflare post API call failed: {err}'
                                       )
@@ -113,8 +114,9 @@ class DynDns(Thread):
                             'content': public_ip
                         }
                         try:
-                            cloudflare.zones.dns_records.put(zone_id, \
-                                record_id, data=new_record)
+                            cloudflare.zones.dns_records.put(zone_id,
+                                                             record_id,
+                                                             data=new_record)
                         except CloudFlare.exceptions.CloudFlareAPIError as err:
                             self.logger.error(f'Cloudflare put API call \
                                               failed: {err}')

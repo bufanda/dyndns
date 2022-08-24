@@ -39,6 +39,7 @@ class ExitDaemon(Exception):
     """ Exception used to exit daemon
     """
 
+
 # pylint: disable=W0703
 if __name__ == '__main__':
 
