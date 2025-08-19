@@ -10,6 +10,8 @@ The requests are GET requests, with basic authentication. A request (going throu
 GET /dyndns HTTP/1.0\r\nX-Forwarded-For: A.B.C.D\r\nHost: 127.0.0.1:12873\r\nConnection: close\r\nAuthorization: Basic <'username:password' url64 encoded>\r\nUser-Agent: Fritz!Box DDNS/1.0.1\r\n\r\n
 </pre>
 
+In the Fritz!Box use as Update URL: `http://{service_ip}/dyndns/?ipv4=<ipaddr>`
+
 I wrote a multi-threaded python3 program that is processing the HTTP requests (similar to the ldapcheck program that I wrote almost 2 years ago). It logs for now a lot of debugging information. After finishing the test period I will probably update it to remove some of the debugging information.
 I also created a systemd service file in the etc folder, with information about how to make the program start automatically at reboot.
 The settings in config.py are self explanatory.
