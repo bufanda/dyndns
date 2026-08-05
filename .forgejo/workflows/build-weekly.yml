@@ -1,0 +1,27 @@
+---
+name: Build action
+enable-email-notifications: true
+on:
+  schedule:
+    - cron: '0 4 * * 3'
+      timezone: Europe/Berlin
+
+jobs:
+  build:
+    name: Build bundle
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install missing dependencies
+        run: apt update && apt --quiet install --yes -qq docker.io
+      - name: Set image tag
+        id: image_tag
+        run:  echo "::set-output name=tag::$(date +%Y%m%d)"
+      - name: Build image
+        run: docker build -t registry.nbg.bufanda.de/bufanda/dyndns:latest .
+      - name: Tag image with daily tag
+        run: docker tag registry.nbg.bufanda.de/bufanda/dyndns:latest registry.nbg.bufanda.de/bufanda/dyndns:${{ steps.image_tag.outputs.tag }}
+      - name: push tagged images
+        run: docker push registry.nbg.bufanda.de/bufanda/dyndns:${{ steps.image_tag.outputs.tag }}
+      - name: push latest images
+        run: docker push registry.nbg.bufanda.de/bufanda/dyndns:latest
