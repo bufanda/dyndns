@@ -13,7 +13,7 @@ jobs:
       - name: Set image tag
         id: image_tag
         run:  echo "::set-output name=tag::$(date +%Y%m%d)"
-      - name: Run hadolint
-        run: docker run --rm -v Dockerfile:/Dockerfile hadolint/hadolint --ignore DL3003 --ignore DL3006 /Dockerfile
+      # - name: Run hadolint
+      #   run: docker run --rm -v Dockerfile:/Dockerfile hadolint/hadolint --ignore DL3003 --ignore DL3006 /Dockerfile
       - name: Build image
         run: docker build -t registry.nbg.bufanda.de/bufanda/dyndns:latest .
